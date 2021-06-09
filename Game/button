@@ -1,0 +1,138 @@
+local accessability = false
+local mon = peripheral.wrap("top")
+mon.setTextColor(colors.black)
+
+mon.setTextScale(0.5)
+local numbers={}
+local button={}
+local winFunc, loseFunc
+local numCorrect = 0
+local numWrong = 0
+mon.setBackgroundColor(colors.black)
+
+function clearTable()
+   button = {}
+   mon.clear()
+end
+               
+function setTable(name, xmin, xmax, ymin, ymax)
+   button[name] = {}
+   button[name]["correct"] = false
+   button[name]["wrong"] = false
+   button[name]["xmin"] = xmin
+   button[name]["ymin"] = ymin
+   button[name]["xmax"] = xmax
+   button[name]["ymax"] = ymax
+end   
+
+function fill(text, color, bData)
+   mon.setBackgroundColor(color)
+   local yspot = math.floor((bData["ymin"] + bData["ymax"]) /2)
+   local xspot = math.floor((bData["xmax"] - bData["xmin"] - string.len(text)) /2) +1
+   for j = bData["ymin"], bData["ymax"] do
+      mon.setCursorPos(bData["xmin"], j)
+      if j == yspot then
+         for k = 0, bData["xmax"] - bData["xmin"] - string.len(text) +1 do
+            if k == xspot then
+			   mon.write(text)
+            else
+               mon.write(" ")
+            end
+         end
+      else
+         for i = bData["xmin"], bData["xmax"] do
+            mon.write(" ")
+         end
+      end
+   end
+   mon.setBackgroundColor(colors.black)
+end
+     
+function screen()
+   local currColor
+   for name,data in pairs(button) do
+      local correct = data["correct"]
+	  local wrong = data["wrong"]
+	  local newname = ""
+      if correct == true then
+	     currColor = colors.lime
+		 newname = " O "
+	  elseif wrong == true then
+		 currColor = colors.red
+		 newname = " X "
+	  else
+	     currColor = colors.gray
+	  end
+      
+	  if accessability then
+	     fill(newname, currColor, data)
+	  else
+	     fill(" ", currColor, data)
+	  end
+   end
+end
+
+function addnumbers(innums)
+	numbers = innums
+end
+     
+function toggleCorrect(name)
+	button[name]["correct"] = true
+	screen()
+end
+
+function toggleWrong(name)
+	button[name]["wrong"] = true
+	screen()
+end
+
+function winlose(func1, func2)
+	loseFunc = func1
+	winFunc = func2
+end
+	 
+function checkxy(x, y)
+   local hasbeenfound = false
+   for name, data in pairs(button) do
+      if y>=data["ymin"] and  y <= data["ymax"] then
+         if x>=data["xmin"] and x<= data["xmax"] then
+			if not button[name]["correct"] and not button[name]["wrong"] then
+				for i in pairs(numbers) do
+					if name == numbers[i] then
+						toggleCorrect(name)
+						numCorrect = numCorrect + 1
+						if numCorrect == #numbers then
+							winFunc()
+						end
+						hasbeenfound = true
+					end
+				end
+				
+				if not hasbeenfound then
+					toggleWrong(name)
+					numWrong = numWrong + 1
+					print(numWrong .. "/3" .. " Wrong")
+					if numWrong == 3 then
+						print("Lose")
+						loseFunc()
+					end
+				end
+				
+				return true
+			end
+         end
+      end
+   end
+   return false
+end
+     
+function heading(text)
+   w, h = mon.getSize()
+   mon.setCursorPos((w-string.len(text))/2+1, 1)
+   mon.write(text)
+end
+     
+function label(w, h, text)
+   mon.setCursorPos(w, h)
+   mon.write(text)
+end
