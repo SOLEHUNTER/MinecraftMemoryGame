@@ -7,7 +7,7 @@ local computernum = "1" --For chaining games together
 local randoms = {}
 --Adjust the amount to squares to click
 randoms["5x"] = 10
-randoms["6x"] = 3 --14
+randoms["6x"] = 14
 randoms["7x"] = 18
 randoms["8x"] = 24
 
