@@ -11,7 +11,10 @@
 --Settings
 price = 10 --In Diamonds
 doorTime = 10 --Seconds to leave door open
-controlComputer = {46} --Computer ID's with Admin Access
+autoreset = true --Enable for auto reset, disable for remote reset
+alarmTime = 10 --Seconds before disabling alarm, if auto reset is enabled
+resetTime = 60 --Seconds before reseting game, if auto reset is enabled
+controlComputer = {50} --Computer ID's with Admin Access
 
 --Startup
 m = peripheral.wrap("back")
@@ -21,7 +24,6 @@ m.setTextScale(1)
 local alarmpid = 0
 function signalProcessor()
 	local id, msg, ptcl = rednet.receive("FleecaNet")
-	print(id)
 	for i=1,#controlComputer,1 do
 		if id == controlComputer[i] then
 			if msg == "reset" then
@@ -38,10 +40,13 @@ function signalProcessor()
 	signalProcessor()
 end
 
+local alarmid
+local resetid
+local hasbeenhacked = false
 function getEvent()
 	local eventdata = {os.pullEvent()}
 	local event = eventdata[1]
-	if event == "monitor_touch" then
+	if event == "monitor_touch" and not hasbeenhacked then
 		m.clear()
 		m.setCursorPos(1,2)
 		m.write("              Hacking...")
@@ -62,6 +67,7 @@ function getEvent()
 				turtle.up()
 			end
 			
+			hasbeenhacked = true
 			m.clear()
 			m.setCursorPos(1,2)
 			m.setTextColor(colors.green)
@@ -72,8 +78,12 @@ function getEvent()
 			alarmpid = multishell.launch({}, "alarm.lua")
 			
 			rednet.broadcast("Lvl_1", "FleecaNet")
-			
-			signalProcessor()
+			if autoreset then
+				alarmid = os.startTimer(alarmTime)
+				resetid = os.startTimer(resetTime)
+			else
+				signalProcessor()
+			end
 		else
 			turtle.turnRight()
 			turtle.turnRight()
@@ -97,8 +107,15 @@ function getEvent()
 			m.setCursorPos(1,3)
 			m.write("     and Click screen to begin Hack")
 		end
-	else
-		--Timer maybe?
+	elseif event == "timer" then
+		if eventdata[2] == alarmid then
+			multishell.setFocus(alarmpid)
+			os.queueEvent("terminate")
+			redstone.setOutput("top", false)
+		elseif eventdata[2] == resetid then
+			rednet.broadcast("reset", "FleecaNet")
+			os.reboot()
+		end
 	end
 end
 
