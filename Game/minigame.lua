@@ -1,6 +1,8 @@
 --Adjust These Variables:
-local screeninput = true -- true == Click screen to start, false == Click button to start
 local scale = 6 --Resolution of the puzzle, options: 5,6,7,8
+local screeninput = true -- true == Click screen to start, false == Click button to start
+local network = "FleecaNet" --Name of the Game Network
+local computernum = "1" --For chaining games together
 
 local randoms = {}
 --Adjust the amount to squares to click
@@ -157,7 +159,7 @@ function success()
 	issuccess = true
 	redstone.setOutput("right", true)
 	m.clear()
-	rednet.broadcast("Lvl_2", "FleecaNet")
+	rednet.broadcast("Lvl_"..computernum+1, network)
 end
 
 print("Program Started!")
